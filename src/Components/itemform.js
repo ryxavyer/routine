@@ -11,10 +11,11 @@ export const ItemForm = ({ userInput, onFormChange, onFormSubmit}) => {
         event.preventDefault()
         onFormSubmit()
     }
+
     return(
         <>
             <div className='input__div'>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate={true}>
                     <input className='input__form' type='text' required value={userInput} onChange={handleChange} placeholder='Add a task ...'></input>
                     <input className='input__submit' type='submit'></input>
                 </form>

@@ -1,7 +1,7 @@
 .input__form {
-    width: 12%;
+    width: 100%;
     padding: 10px 10px 10px 10px;
-    background-color: rgb(127, 80, 172);
+    background-color: transparent;
     border-radius: 0px;
     cursor: pointer;
     border: none;
@@ -12,9 +12,22 @@
 }
 
 .input__form:focus {
-    width: 35%;
+    width: 100%;
     color: white;
     font-family: 'Inter';
+}
+
+.input__form:not(:placeholder-shown):not(:focus) {
+    color: white;
+}
+
+input::-webkit-input-placeholder {
+    -webkit-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+}
+   
+input:focus::-webkit-input-placeholder {
+    color: transparent;
 }
 
 .input__submit {
@@ -22,8 +35,9 @@
 }
 
 .input__div {
-    text-align: center;
-    margin: 0px auto;
+    text-align: left;
+    margin: auto;
+    display: inline;
 }
 
 ::placeholder {

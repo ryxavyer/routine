@@ -21,7 +21,7 @@ const Homepage = () => {
         })
 
         const data = await res.json()
-        console.log(data)
+        //console.log(data)
         dispatch(setSignedIn(true))
         dispatch(setUserData(data))
     }

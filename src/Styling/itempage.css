@@ -1,0 +1,35 @@
+.item__div {
+    width: 300;
+    display: inline-block;
+    vertical-align: top;
+    margin: 10px;
+}
+
+.list__div {
+    width: 300;
+    display: inline-block;
+    vertical-align: top;
+    margin: 10px;
+    animation: fly-up 1s
+}
+
+.outer__div {
+    width: 100%;
+    padding-top: 50px;
+    text-align: center;
+    animation: fade-in 2s
+}
+
+@keyframes fade-in {
+    from { opacity: 0 }
+    to { opacity: 100 }
+}
+
+@keyframes blur-in {
+    from {
+        filter: blur(2px);
+    }
+    to { 
+        filter: blur(0);
+    }
+}

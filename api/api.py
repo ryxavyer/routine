@@ -31,7 +31,7 @@ class User(db.Model):
     email = db.Column(db.String, nullable = False)
     name = db.Column(db.String, nullable = False)
     items = db.relationship('Item', backref='author', cascade='all, delete, delete-orphan')
-    lists = db.relationship('Itemlist', backref='author', cascade='all, delete, delete-orphan')
+    lists = db.relationship('Itemlist', backref='listauthor', cascade='all, delete, delete-orphan')
 
     def __str__(self):
         return f'{self.id} {self.email} {self.name} {self.items}'
@@ -44,6 +44,7 @@ class Itemlist(db.Model):
 
     def __str__(self):
         return f'{self.id} {self.name} {self.user_id}'
+
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -68,7 +69,7 @@ def list_serializer(user_list):
     return {
         'id': user_list.id,
         'name': user_list.name,
-        'items': jsonify([*map(item_serializer, user_list.items)]),
+        'items': [*map(item_serializer, user_list.items)],
     }
 
 @app.route('/')
@@ -104,18 +105,17 @@ def index():
     user = User.query.filter_by(email=session['email']).first()
     if user:
         return jsonify([*map(list_serializer, user.lists)])
-    return {'500': 'Log in to fetch data'}
+    return {'500': 'Log in to fetch data'} #Fix me 
 
 @app.route('/api/createlist', methods=['POST'])
 @login_required
 def createList():
     user = User.query.filter_by(email=session['email']).first()
     data = json.loads(request.data)
-    newlist = Itemlist(name=data['name'], items=[])
-    user.lists.append(newlist)
+    newlist = Itemlist(name=data['name'], items=[], listauthor=user)
+    db.session.add(newlist)
     db.session.commit()
-    ret = Itemlist.query.filter_by(name=data['name']).first()
-    return jsonify(list_serializer(ret))
+    return jsonify(list_serializer(newlist))
 
 @app.route('/api/<int:list_id>/create', methods=['POST'])
 @login_required
@@ -123,16 +123,15 @@ def createItem(list_id):
     user = User.query.filter_by(email=session['email']).first()
     currList = Itemlist.query.filter_by(id=list_id).first()
     data = json.loads(request.data)
-    item = Item(content=data['content'])
-    user.items.append(item)
-    currList.items.append(item)
+    item = Item(content=data['content'], author=user, belongsTo=currList)
+    db.session.add(item)
     db.session.commit()
     return {'201': 'item created successfully'}
 
 @app.route('/api/<int:list_id>', methods=['GET'])
 @login_required
 def updatedItems(list_id):
-    currList = Itemlist.query.filter_by(id=id).first()
+    currList = Itemlist.query.filter_by(id=list_id).first()
     return jsonify(list_serializer(currList))
 
 @app.route('/api/delete', methods=['POST'])
@@ -141,13 +140,25 @@ def delete():
     data = json.loads(request.data)
     Item.query.filter_by(id=data['id']).delete()
     db.session.commit()
-    return {'204': 'item deleted successfully'}
+    return {'200': 'item deleted successfully'}
+
+@app.route('/api/deletelist', methods=['POST'])
+@login_required
+def deleteList():
+    data = json.loads(request.data)
+    Itemlist.query.filter_by(id=data['id']).delete()
+    db.session.commit()
+    return {'204': 'list deleted successfully'}
 
 def handleUser(email, name):
-    user = User.query.filter_by(email=email)
+    user = User.query.filter_by(email=email).first()
     if user:
         return
-    new_user = User(email=email, name=name, items=[], lists=[])
+    new_user = User(email=email, name=name)
+    starterList = Itemlist(name='General', listauthor=new_user)
+    starterItem = Item(content='push changes to github', author=new_user, belongsTo=starterList)
+    new_user.lists.append(starterList)
+    new_user.items.append(starterItem)
     db.session.add(new_user)
     db.session.commit()
     return

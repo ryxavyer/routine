@@ -1,53 +1,24 @@
 import React, {useState, useEffect} from 'react';
 import { ItemForm } from '../Components/itemform';
-import { ListForm } from '../Components/listform'
-import { useSelector } from 'react-redux';
-import { selectUserData } from '../Features/userSlice';
+import { ListForm } from '../Components/listform';
+import { ItemCard } from '../Components/itemcard';
+import { ListCard } from '../Components/listcard';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectListData, selectSelectedIndex, setListData, setItemData, setSelectedIndex } from '../Features/userSlice';
 import Navbar from '../Components/navbar';
-import { makeStyles } from '@material-ui/core/styles';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import IconButton from '@material-ui/core/IconButton';
-import CheckIcon from '@material-ui/icons/Check';
-import { FixedSizeList } from 'react-window';
+import '../Styling/itempage.css';
 
-
-const useStyles = makeStyles((theme) => ({
-    body: {
-        maxWidth: 400,
-        boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.5)',
-        margin: 'auto auto 10px auto',
-        backgroundColor: 'rgb(150, 96, 204)',
-        color: 'white',
-    },
-}))
 
 export const ItemPage = () => {
 
-    const classes = useStyles()
+    const dispatch = useDispatch()
 
-    const userData = useSelector(selectUserData)
+    const selectedIndex = useSelector(selectSelectedIndex)
+    const lists = useSelector(selectListData)
 
-    const [selectedIndex, setSelectedIndex] = useState(1)
-    const [lists, setLists] = useState([])
-    const [items, setItems] = useState([])
     const [addItem, setAddItem] = useState('')
     const [addList, setAddList] = useState('')
 
-    const handleListItemClick = (index) => {
-        setSelectedIndex(index)
-        setItems(Array.from(lists[index].items))
-        renderItems()
-    }
-
-    const updateLists = (data) => {
-        setItems(data)
-        let newArr = lists
-        newArr[selectedIndex] = data
-        setLists(newArr)
-    }
 
     useEffect(() => {
         fetch(`/api/fetchinfo`).then(response => {
@@ -55,10 +26,11 @@ export const ItemPage = () => {
                return response.json()
             }
         }).then(data => {
-            setLists(Array.from(data))
-            handleListItemClick(selectedIndex)
+            console.log(data)
+            dispatch(setListData(Array.from(data)))
+            dispatch(setItemData(data[selectedIndex].items))
         })
-    },[userData?.email]) // eslint-disable-line
+    },[]) //eslint-disable-line
 
     const handleFormChange = (inputValue) => {
         setAddItem(inputValue)
@@ -69,7 +41,7 @@ export const ItemPage = () => {
     }
 
     const handleFormSubmit = () => {
-        fetch(`/api/${list.id}/create`, {
+        fetch(`/api/${lists[selectedIndex].id}/create`, {
             method: 'POST',
             body: JSON.stringify({
                 content:addItem
@@ -94,82 +66,46 @@ export const ItemPage = () => {
             }
         }).then(response => response.json()).then(data => {
             setAddList('')
-            let newArr = lists.concat(Array.from(data))
-            setLists(newArr)
-            handleListItemClick(lists.length)
+            let newArr = lists.concat(data)
+            dispatch(setListData(newArr))
+            dispatch(setItemData(newArr[newArr.length-1].items))
+            dispatch(setSelectedIndex(newArr.length-1))
         })
     }
 
     const getLatestItems = () => {
-        fetch(`/api/${list.id}`).then(response => {
+        fetch(`/api/${lists[selectedIndex].id}`).then(response => {
             if (response.ok){
                 return response.json()
             }
         }).then(data => {
-            updateLists(data)
-            renderItems()
+            console.log(data)
+            let currList = {id:lists[selectedIndex].id, items:data.items, name:lists[selectedIndex].name}
+            let newLists = []
+            for (const [index, value] of lists.entries()) {
+                if (index === selectedIndex) {
+                    newLists.push(currList)
+                }
+                else newLists.push(value)
+            }
+            dispatch(setListData(newLists))
+            dispatch(setItemData(data.items))
         })
-    }
-
-    const deleteItem = (id) => {
-        fetch(`/api/delete`, {
-            method: 'POST',
-            body: JSON.stringify({
-                id: id
-            })
-        }).then(response => response.json()).then(data=>{
-            getLatestItems()
-        })
-    }
-
-    const renderItems = () => {
-        return (
-            <div className={classes.body}>
-                <FixedSizeList height={400} width={300} itemSize={46} itemCount={items.length}>
-                    {items.map(item => {
-                        return (
-                                <ListItem key={item.id}>
-                                    <ListItemText primary={item.content}/>
-                                    <ListItemSecondaryAction>
-                                        <IconButton edge='end' onClick={() => deleteItem(item.id)} style={{color:'white'}}> 
-                                            <CheckIcon />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                        )
-                        })}
-                </FixedSizeList>
-            </div>
-        )
-    }
-
-    const renderLists = () => {
-        return (
-            <div className={classes.list}>
-                <List component='nav'>
-                    {formatLists()}
-                </List>
-            </div>
-        )
-    }
-
-    const formatLists = () => {
-        return(
-            lists.map((list,index) => {
-                return (
-                    <ListItem key={list.id} button selected={selectedIndex === index} onClick={(event) => handleListItemClick(event, index)}>
-                        <ListItemText primary={list.name}/>
-                    </ListItem>
-                )
-            }))
     }
 
     return(
         <>
             <Navbar />
-            <ItemForm userInput={addItem} onFormChange={ handleFormChange } onFormSubmit={ handleFormSubmit }/>
-            <ListForm userInput={addList} onFormChange={ handleListFormChange } onFormSubmit={ handleListFormSubmit }/>
-            {renderLists()}
+            <div className="outer__div">
+                <div className="list__div">
+                    <ListForm userInput={addList} onFormChange={ handleListFormChange } onFormSubmit={ handleListFormSubmit }/>
+                    <ListCard />
+                </div>
+                <div className="item__div">
+                    <ItemForm userInput={addItem} onFormChange={ handleFormChange } onFormSubmit={ handleFormSubmit }/>
+                    <ItemCard />
+                </div>
+            </div>
         </>
     )
 }
