@@ -18,19 +18,35 @@ export const ItemPage = () => {
 
     const [addItem, setAddItem] = useState('')
     const [addList, setAddList] = useState('')
+    const [isEmpty, setIsEmpty] = useState(false)
 
 
     useEffect(() => {
+        updateInfo()
+    },[]) //eslint-disable-line
+
+    const updateInfo = () => {
         fetch(`/api/fetchinfo`).then(response => {
             if(response.ok){
                return response.json()
             }
         }).then(data => {
-            console.log(data)
-            dispatch(setListData(Array.from(data)))
-            dispatch(setItemData(data[selectedIndex].items))
+            if(!(!data.length)){
+                if(data[selectedIndex] === undefined) {
+                    dispatch(setSelectedIndex(0))
+                    dispatch(setListData(Array.from(data)))
+                    dispatch(setItemData(data[0].items))
+                } else {
+                    dispatch(setListData(Array.from(data)))
+                    dispatch(setItemData(data[selectedIndex].items))
+                }
+            } else {
+                dispatch(setListData([]))
+                dispatch(setItemData([]))
+                setIsEmpty(true)
+            }
         })
-    },[]) //eslint-disable-line
+    }
 
     const handleFormChange = (inputValue) => {
         setAddItem(inputValue)
@@ -70,6 +86,7 @@ export const ItemPage = () => {
             dispatch(setListData(newArr))
             dispatch(setItemData(newArr[newArr.length-1].items))
             dispatch(setSelectedIndex(newArr.length-1))
+            if (isEmpty) setIsEmpty(false)
         })
     }
 
@@ -79,7 +96,6 @@ export const ItemPage = () => {
                 return response.json()
             }
         }).then(data => {
-            console.log(data)
             let currList = {id:lists[selectedIndex].id, items:data.items, name:lists[selectedIndex].name}
             let newLists = []
             for (const [index, value] of lists.entries()) {
@@ -96,14 +112,12 @@ export const ItemPage = () => {
     return(
         <>
             <Navbar />
-            <div className="outer__div">
-                <div className="list__div">
+            <div className="outer__div"><div className="list__div">
                     <ListForm userInput={addList} onFormChange={ handleListFormChange } onFormSubmit={ handleListFormSubmit }/>
-                    <ListCard />
-                </div>
-                <div className="item__div">
-                    <ItemForm userInput={addItem} onFormChange={ handleFormChange } onFormSubmit={ handleFormSubmit }/>
-                    <ItemCard />
+                    <ListCard update={ updateInfo }/>
+                </div><div className="item__div">
+                    <ItemForm userInput={addItem} onFormChange={ handleFormChange } onFormSubmit={ handleFormSubmit } isEmpty={ isEmpty }/>
+                    <ItemCard update={ updateInfo }/>
                 </div>
             </div>
         </>

@@ -16,10 +16,15 @@ const useStyles = makeStyles((theme) => ({
         width: '100%',
         paddingBottom: 0,
         paddingTop: 0,
-        boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.5)',
-        backgroundColor: 'rgb(150, 96, 204)',
+        //boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.4)',
+        backgroundColor: 'transparent',
         color: 'white',
         fontFamily: 'Inter',
+    },
+    listItem: {
+        boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgb(150, 96, 204)',
+        marginBottom: 10,
     },
     text: {
         fontSize: 16,
@@ -42,7 +47,7 @@ const LightTooltip = withStyles((theme) => ({
     },
   }))(Tooltip);
 
-export const ItemCard = () => {
+export const ItemCard = ({ update }) => {
 
     const classes = useStyles()
 
@@ -64,17 +69,7 @@ export const ItemCard = () => {
                 id: id
             })
         }).then(response => response.json()).then(data=>{
-            console.log(data)
-            let filteredItems = items.filter(item => item.id !== id)
-            let newLists = []
-            for (const [index, value] of lists.entries()) {
-                if (index === selectedIndex) {
-                    newLists.push({id:lists[selectedIndex].id, items:filteredItems, name:lists[selectedIndex].name})
-                }
-                else newLists.push(value)
-            }
-            dispatch(setListData(newLists))
-            dispatch(setItemData(filteredItems))
+            update()
         })
     }
 
@@ -84,7 +79,7 @@ export const ItemCard = () => {
                 <List className={classes.body}>
                     {items.map(item => {
                         return (
-                                <ListItem key={item.id}>
+                                <ListItem className={classes.listItem} key={item.id}>
                                     <ListItemText primary={item.content} classes={{primary: classes.text}}/>
                                     <ListItemSecondaryAction>
                                         <LightTooltip title="Mark complete" placement='right'>

@@ -1,7 +1,7 @@
 import React from 'react';
 import '../Styling/itemform.css';
 
-export const ItemForm = ({ userInput, onFormChange, onFormSubmit}) => {
+export const ItemForm = ({ userInput, onFormChange, onFormSubmit, isEmpty }) => {
 
     const handleChange = (event) => {
         onFormChange(event.target.value)
@@ -15,7 +15,7 @@ export const ItemForm = ({ userInput, onFormChange, onFormSubmit}) => {
     return(
         <>
             <div className='input__div'>
-                <form onSubmit={handleSubmit} noValidate={true}>
+                <form onSubmit={handleSubmit} noValidate={true} hidden={isEmpty}>
                     <input className='input__form' type='text' required value={userInput} onChange={handleChange} placeholder='Add a task ...'></input>
                     <input className='input__submit' type='submit'></input>
                 </form>

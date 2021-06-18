@@ -1,23 +1,23 @@
 .item__div {
-    width: 300;
+    width: 55vw;
     display: inline-block;
+    position: relative;
     vertical-align: top;
-    margin: 10px;
+    margin: 30px 0px auto 30px;
 }
 
 .list__div {
-    width: 300;
+    width: 25vw;
     display: inline-block;
-    vertical-align: top;
-    margin: 10px;
-    animation: fly-up 1s
+    position: relative;
+    margin: 30px auto;
 }
 
 .outer__div {
     width: 100%;
-    padding-top: 50px;
+    padding-top: 5px;
     text-align: center;
-    animation: fade-in 2s
+    animation: fade-in 2s;
 }
 
 @keyframes fade-in {

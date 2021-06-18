@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, json, url_for, session, redirect
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import backref
 from authlib.integrations.flask_client import OAuth
 from auth_decorator import login_required
 from google.oauth2 import id_token
@@ -18,29 +19,29 @@ app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 db = SQLAlchemy(app)
 
 class Item(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key = True, autoincrement=True)
     content = db.Column(db.Text, nullable = False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    list_id = db.Column(db.Integer, db.ForeignKey('itemlist.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    list_id = db.Column(db.Integer, db.ForeignKey('itemlist.id', ondelete='CASCADE'))
 
     def __str__(self):
         return f'{self.id} {self.content} {self.user_id}'
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key = True, autoincrement=True)
     email = db.Column(db.String, nullable = False)
     name = db.Column(db.String, nullable = False)
-    items = db.relationship('Item', backref='author', cascade='all, delete, delete-orphan')
-    lists = db.relationship('Itemlist', backref='listauthor', cascade='all, delete, delete-orphan')
+    items = db.relationship("Item", backref=backref('author', passive_deletes=True))
+    lists = db.relationship("Itemlist", backref=backref('listauthor', passive_deletes=True))
 
     def __str__(self):
         return f'{self.id} {self.email} {self.name} {self.items}'
 
 class Itemlist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
-    items = db.relationship('Item', backref='belongsTo', cascade='all, delete, delete-orphan')
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    items = db.relationship("Item", backref=backref('list', passive_deletes=True))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
 
     def __str__(self):
         return f'{self.id} {self.name} {self.user_id}'
@@ -123,7 +124,7 @@ def createItem(list_id):
     user = User.query.filter_by(email=session['email']).first()
     currList = Itemlist.query.filter_by(id=list_id).first()
     data = json.loads(request.data)
-    item = Item(content=data['content'], author=user, belongsTo=currList)
+    item = Item(content=data['content'], user_id=user.id, list_id=currList.id)
     db.session.add(item)
     db.session.commit()
     return {'201': 'item created successfully'}
@@ -138,7 +139,8 @@ def updatedItems(list_id):
 @login_required
 def delete():
     data = json.loads(request.data)
-    Item.query.filter_by(id=data['id']).delete()
+    item = Item.query.filter_by(id=data['id']).first()
+    db.session.delete(item)
     db.session.commit()
     return {'200': 'item deleted successfully'}
 
@@ -146,9 +148,10 @@ def delete():
 @login_required
 def deleteList():
     data = json.loads(request.data)
-    Itemlist.query.filter_by(id=data['id']).delete()
+    listref = Itemlist.query.filter_by(id=data['id']).first()
+    db.session.delete(listref)
     db.session.commit()
-    return {'204': 'list deleted successfully'}
+    return {'200': 'list deleted successfully'}
 
 def handleUser(email, name):
     user = User.query.filter_by(email=email).first()
@@ -156,7 +159,7 @@ def handleUser(email, name):
         return
     new_user = User(email=email, name=name)
     starterList = Itemlist(name='General', listauthor=new_user)
-    starterItem = Item(content='push changes to github', author=new_user, belongsTo=starterList)
+    starterItem = Item(content='To-do item', author=new_user, list=starterList)
     new_user.lists.append(starterList)
     new_user.items.append(starterItem)
     db.session.add(new_user)

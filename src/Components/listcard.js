@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
+import MuiListItem from "@material-ui/core/ListItem";
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
@@ -10,16 +10,38 @@ import Tooltip from '@material-ui/core/Tooltip';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectListData, selectSelectedIndex, setSelectedIndex, setItemData, setListData } from '../Features/userSlice';
 
+const ListItem = withStyles({
+    root: {
+      "&$selected": {
+        backgroundColor: "rgb(188,120,222)",
+        color: "white"
+      },
+      "&$selected:hover": {
+        backgroundColor: "rgb(188,120,222)",
+        color: "white"
+      },
+      "&:hover": {
+        backgroundColor: "rgb(170, 120, 221)",
+        color: "white"
+      }
+    },
+    selected: {}
+  })(MuiListItem);
 
 const useStyles = makeStyles((theme) => ({
     list: {
         width: '100%',
         paddingBottom: 0,
         paddingTop: 0,
-        boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.5)',
-        backgroundColor: 'rgb(150, 96, 204)',
+        //boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.4)',
+        backgroundColor: 'transparent',
         color: 'white',
         fontFamily: 'Inter',
+    },
+    listItem: {
+        boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgb(150, 96, 204)',
+        marginBottom: 10,
     },
     body: {
         fontSize: 16,
@@ -42,7 +64,7 @@ const LightTooltip = withStyles((theme) => ({
     },
   }))(Tooltip);
 
-export const ListCard = () => {
+export const ListCard = ({update}) => {
 
     const classes = useStyles()
 
@@ -68,8 +90,11 @@ export const ListCard = () => {
                 id: id
             })
         }).then(response => response.json()).then(data=>{
+            dispatch(setSelectedIndex(0))
             let filteredArr = lists.filter(list => list.id !== id)
             dispatch(setListData(filteredArr))
+            dispatch(setItemData(lists[0].items))
+            update()
         })
     }
 
@@ -79,7 +104,7 @@ export const ListCard = () => {
                 <List component='nav' className={classes.list}>
                     {lists.map((list,index) => {
                         return (
-                            <ListItem key={list.id} button selected={selectedIndex === index} onClick={() => handleListItemClick(index)}>
+                            <ListItem className={classes.listItem} key={list.id} button selected={selectedIndex === index} onClick={() => handleListItemClick(index)}>
                                 <ListItemText primary={list.name} classes={{primary: classes.body}}/>
                                 <ListItemSecondaryAction>
                                     <LightTooltip title="Delete" placement='right'>

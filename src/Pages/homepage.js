@@ -31,21 +31,24 @@ const Homepage = () => {
     return(
         <div className='home__page' style={{ display:isSignedIn? "none" : "" }}>
             {!isSignedIn ? <div className='login__message'>
+                <h1>Routine</h1>
                 <p>
-                    Keep track of your daily tasks and get more done.  Log in to get started.
+                    Keep track of your daily tasks and get more done.<br></br>Log in to get started.
                 </p>
                 <GoogleLogin
                     clientId = '337980151831-tjeibe2b4gbe5bkc14g3mkjbc15ts9fk.apps.googleusercontent.com'
-                    render={(renderProps) => (
-                        <button
-                            onClick={renderProps.onClick}
-                            disabled={renderProps.disabled}
-                            className='login__button'
-                        >Login with Google</button>
-                    )}
+                    // render={(renderProps) => (
+                    //     <button
+                    //         onClick={renderProps.onClick}
+                    //         disabled={renderProps.disabled}
+                    //         className='login__button'
+                    //     >Sign in with Google</button>
+                    // )}
                     onSuccess={Login}
                     onFailure={Login}
+                    icon={true}
                     isSignedIn={true}
+                    className="login__button"
                     cookiePolicy={'single_host_origin'}
                 />
             </div> : '' }
